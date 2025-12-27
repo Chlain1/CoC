@@ -1,0 +1,35 @@
+{
+  "state": "inWar",
+  "teamSize": 15,
+  "attacksPerMember": 2,
+  "clan": {
+    "tag": "#ABC123",
+    "name": "Clan A",
+    "members": [
+      {
+        "tag": "#P1",
+        "name": "Alice",
+        "townHallLevel": 13,
+        "mapPosition": 1,
+        "attacks": [
+          {"order": 1, "attackerTag": "#P1", "defenderTag": "#E1", "stars": 3, "destructionPercentage": 100.0},
+          {"order": 2, "attackerTag": "#P1", "defenderTag": "#E2", "stars": 2, "destructionPercentage": 75.0}
+        ]
+      },
+      {
+        "tag": "#P2",
+        "name": "Bob",
+        "townHallLevel": 12,
+        "mapPosition": 2,
+        "attacks": [
+          {"order": 1, "attackerTag": "#P2", "defenderTag": "#E3", "stars": 2, "destructionPercentage": 80.0}
+        ]
+      }
+    ]
+  },
+  "opponent": {
+    "tag": "#XYZ987",
+    "name": "Clan B",
+    "members": []
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "tag": "#P123ABC",
+  "name": "TestPlayer",
+  "townHallLevel": 14,
+  "expLevel": 180,
+  "trophies": 3500,
+  "bestTrophies": 4200,
+  "warStars": 450,
+  "attackWins": 1200,
+  "defenseWins": 800,
+  "clan": {
+    "tag": "#2JYJQ8U9V",
+    "name": "Test Clan",
+    "clanLevel": 12,
+    "badgeUrls": {}
+  },
+  "league": {
+    "id": 29000015,
+    "name": "Champion League III"
+  }
+}

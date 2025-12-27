@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "result": "win",
+      "teamSize": 15,
+      "attacksPerMember": 2,
+      "endTime": "20231212T123456.000Z",
+      "clan": {
+        "tag": "#ABC123",
+        "name": "Clan A",
+        "clanLevel": 12,
+        "attacks": 28,
+        "stars": 30,
+        "destructionPercentage": 91.2
+      },
+      "opponent": {
+        "tag": "#XYZ987",
+        "name": "Clan B",
+        "clanLevel": 11,
+        "attacks": 27,
+        "stars": 25,
+        "destructionPercentage": 82.3
+      }
+    },
+    {
+      "result": "lose",
+      "teamSize": 15,
+      "attacksPerMember": 2,
+      "endTime": "20231210T113000.000Z",
+      "clan": {
+        "tag": "#ABC123",
+        "name": "Clan A",
+        "clanLevel": 12,
+        "attacks": 29,
+        "stars": 26,
+        "destructionPercentage": 85.0
+      },
+      "opponent": {
+        "tag": "#LMN555",
+        "name": "Clan C",
+        "clanLevel": 13,
+        "attacks": 30,
+        "stars": 28,
+        "destructionPercentage": 88.7
+      }
+    }
+  ]
+}
