@@ -37,3 +37,5 @@ ENV/
 # Output files
 *.csv
 *.log
+
+*.odp

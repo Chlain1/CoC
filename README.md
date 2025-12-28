@@ -64,6 +64,12 @@ CSV-Export der Vergleichstabelle:
 python3 src/cli.py --clan "#CLAN1" --clan "#CLAN2" --wars 20 --csv comparison.csv
 ```
 
+Spielerinfos aus CSV mit Tags laden und als CSV exportieren (Spalte `tag` oder erste Spalte):
+
+```bash
+python3 src/cli.py --players-csv player_tags.csv --players-out players_out.csv
+```
+
 Aktuelle Kriegs-Top-Angreifer pro Clan anzeigen (falls verfügbar):
 
 ```bash

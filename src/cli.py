@@ -36,6 +36,18 @@ def parse_args(argv=None):
         help="Optionaler Pfad für CSV-Export der Vergleichstabelle",
     )
     parser.add_argument(
+        "--players-csv",
+        dest="players_csv",
+        default=None,
+        help="Pfad zu einer CSV mit Spieler-Tags (Spalte 'tag' oder erste Spalte). Lädt Spielerinfos und exportiert sie als CSV.",
+    )
+    parser.add_argument(
+        "--players-out",
+        dest="players_out",
+        default="players_out.csv",
+        help="Zielpfad für den CSV-Export der Spielerinfos (Standard: players_out.csv).",
+    )
+    parser.add_argument(
         "--current-war-stats",
         dest="current_war_stats",
         action="store_true",
@@ -135,52 +147,199 @@ def write_csv(rows, path):
     print(f"CSV exportiert: {path}")
 
 
-def get_clan_from_player(api, player_tag: str) -> str | None:
-    """Ermittle Clan-Tag aus Player-Tag."""
-    player = api.get_player(player_tag)
-    if not player:
-        print(f"Warnung: Spieler {player_tag} nicht gefunden.", file=sys.stderr)
-        return None
-    clan = player.get("clan")
-    if not clan or not clan.get("tag"):
-        print(f"Warnung: Spieler {player_tag} ist in keinem Clan.", file=sys.stderr)
-        return None
-    return clan["tag"]
+def write_player_csv(rows, path):
+    if not rows:
+        print("Keine Spieler-Daten zum Export.")
+        return
+    fieldnames = [
+        "tag",
+        "name",
+        "clan_tag",
+        "clan_name",
+        "role",
+        "town_hall",
+        "town_hall_weapon",
+        "exp_level",
+        "trophies",
+        "best_trophies",
+        "war_stars",
+        "attack_wins",
+        "defense_wins",
+        "donations",
+        "donations_received",
+        "league",
+        "builder_hall",
+        "versus_trophies",
+        "best_versus_trophies",
+    ]
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for r in rows:
+            writer.writerow({k: r.get(k) for k in fieldnames})
+    print(f"Spieler-CSV exportiert: {path}")
+
+
+def print_player_details(p):
+    print(f"\n=== Spieler-Info: {p.get('name')} ({p.get('tag')}) ===")
+    print(f"Town Hall: {p.get('townHallLevel')} (Weapon: {p.get('townHallWeaponLevel', '-')})")
+    print(f"XP Level: {p.get('expLevel')} | War Stars: {p.get('warStars')}")
+    print(f"Trophies: {p.get('trophies')} (Best: {p.get('bestTrophies')})")
+    
+    clan = p.get("clan")
+    if clan:
+        print(f"Clan: {clan.get('name')} ({clan.get('tag')}) - {p.get('role')}")
+    else:
+        print("Clan: Kein Clan")
+        
+    league = p.get("league")
+    if league:
+        print(f"League: {league.get('name')}")
+        
+    print(f"Attack Wins: {p.get('attackWins')} | Defense Wins: {p.get('defenseWins')}")
+    print(f"Donations: {p.get('donations')} | Received: {p.get('donationsReceived')}")
+    
+    # Builder Base
+    if p.get('builderHallLevel'):
+        print(f"Builder Hall: {p.get('builderHallLevel')} | Trophies: {p.get('versusTrophies')} (Best: {p.get('bestVersusTrophies')})")
+    
+    # Labels
+    labels = p.get("labels", [])
+    if labels:
+        l_str = ", ".join([l['name'] for l in labels])
+        print(f"Labels: {l_str}")
+
+    # Heroes
+    heroes = p.get("heroes", [])
+    if heroes:
+        h_str = ", ".join([f"{h['name']} ({h['level']})" for h in heroes if h.get('village') == 'home'])
+        print(f"Heroes: {h_str}")
+        
+    # Troops
+    troops = p.get("troops", [])
+    if troops:
+        home_troops = [t for t in troops if t.get('village') == 'home']
+        if home_troops:
+            t_str = ", ".join([f"{t['name']} ({t['level']})" for t in home_troops])
+            print(f"Troops: {t_str}")
+            
+    spells = p.get("spells", [])
+    if spells:
+        s_str = ", ".join([f"{s['name']} ({s['level']})" for s in spells])
+        print(f"Spells: {s_str}")
+    print("=" * 60 + "\n")
+
+
+def read_player_tags_csv(path: str) -> list[str]:
+    tags: list[str] = []
+    with open(path, newline="", encoding="utf-8") as f:
+        reader = csv.reader(f)
+        first = next(reader, None)
+        if first is None:
+            return []
+
+        # Falls Header 'tag' enthält, nutze entsprechende Spalte, sonst erste Spalte
+        tag_idx = 0
+        if any(col.lower() == "tag" for col in first):
+            tag_idx = next(i for i, col in enumerate(first) if col.lower() == "tag")
+        else:
+            tags.append(first[tag_idx].strip())
+
+        for row in reader:
+            if len(row) <= tag_idx:
+                continue
+            tags.append(row[tag_idx].strip())
+
+    # Filter leere Einträge
+    return [t for t in tags if t]
+
+
+def player_to_row(p: dict) -> dict:
+    clan = p.get("clan") or {}
+    league = p.get("league") or {}
+    return {
+        "tag": p.get("tag"),
+        "name": p.get("name"),
+        "clan_tag": clan.get("tag"),
+        "clan_name": clan.get("name"),
+        "role": p.get("role"),
+        "town_hall": p.get("townHallLevel"),
+        "town_hall_weapon": p.get("townHallWeaponLevel"),
+        "exp_level": p.get("expLevel"),
+        "trophies": p.get("trophies"),
+        "best_trophies": p.get("bestTrophies"),
+        "war_stars": p.get("warStars"),
+        "attack_wins": p.get("attackWins"),
+        "defense_wins": p.get("defenseWins"),
+        "donations": p.get("donations"),
+        "donations_received": p.get("donationsReceived"),
+        "league": league.get("name"),
+        "builder_hall": p.get("builderHallLevel"),
+        "versus_trophies": p.get("versusTrophies"),
+        "best_versus_trophies": p.get("bestVersusTrophies"),
+    }
 
 
 def main(argv=None):
     args = parse_args(argv)
     token = ensure_token(args.token)
 
-    # Auto-detect clan from player if no clans specified
-    if not args.clans or len(args.clans) == 0:
-        player_tag = args.player_tag or os.environ.get("COC_PLAYER_TAG")
-        if not player_tag:
-            print(
-                "Fehler: Kein Clan angegeben. Nutze --clan oder setze COC_PLAYER_TAG in .env für Auto-Erkennung.",
-                file=sys.stderr,
-            )
-            sys.exit(2)
-        
-        # Lazy import here for auto-detection
-        from coc_api import CocApi
-        api_temp = CocApi(token)
-        
-        clan_tag = get_clan_from_player(api_temp, player_tag)
-        if not clan_tag:
-            sys.exit(2)
-        
-        args.clans = [clan_tag]
-        print(f"Auto-erkannter Clan: {clan_tag}\n")
-
-    # Lazy imports here so --help works without dependencies
+    # Lazy imports
     from coc_api import CocApi
     from stats import (
         compute_war_metrics,
         summarize_current_war,
     )
-
+    
     api = CocApi(token)
+
+    # Spieler-CSV-Modus: Liste von Tags einlesen, Spielerinfos exportieren
+    if args.players_csv:
+        tags = read_player_tags_csv(args.players_csv)
+        if not tags:
+            print(f"Fehler: Keine Spieler-Tags in {args.players_csv} gefunden.", file=sys.stderr)
+            sys.exit(2)
+
+        player_rows = []
+        for tag in tags:
+            player = api.get_player(tag)
+            if not player:
+                print(f"Warnung: Spieler {tag} nicht gefunden oder Fehler beim Abruf.", file=sys.stderr)
+                continue
+            player_rows.append(player_to_row(player))
+
+        if not player_rows:
+            print("Fehler: Keine Spieler konnten geladen werden.", file=sys.stderr)
+            sys.exit(2)
+
+        write_player_csv(player_rows, args.players_out)
+        return
+
+    # Player Info & Auto-detect clan
+    player_tag = args.player_tag or os.environ.get("COC_PLAYER_TAG")
+    
+    if player_tag:
+        player = api.get_player(player_tag)
+        if player:
+            print_player_details(player)
+            # Auto-detect clan if needed
+            if not args.clans:
+                clan = player.get("clan")
+                if clan and clan.get("tag"):
+                    args.clans = [clan["tag"]]
+                    print(f"Auto-erkannter Clan: {clan['tag']} ({clan.get('name')})\n")
+                else:
+                    print(f"Warnung: Spieler {player_tag} ist in keinem Clan.", file=sys.stderr)
+        else:
+            if args.player_tag or not args.clans:
+                print(f"Warnung: Spieler {player_tag} nicht gefunden.", file=sys.stderr)
+
+    if not args.clans:
+        print(
+            "Fehler: Kein Clan angegeben. Nutze --clan oder setze COC_PLAYER_TAG in .env für Auto-Erkennung.",
+            file=sys.stderr,
+        )
+        sys.exit(2)
 
     # Vergleichsmetriken pro Clan
     comparison_rows = []
